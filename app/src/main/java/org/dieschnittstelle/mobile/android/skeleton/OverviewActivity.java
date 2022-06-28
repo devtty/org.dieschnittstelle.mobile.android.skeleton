@@ -176,7 +176,7 @@ public class OverviewActivity extends AppCompatActivity {
                 (result) -> {
                     Log.i(LOGGER, "resultCode: " + result.getResultCode());
                     Log.i(LOGGER, "data: " + result.getData());
-                    if(result.getResultCode() == DetailviewActivity.STATUS_CREATED || result.getResultCode() == DetailviewActivity.STATUS_UPDATED) {
+                    if(result.getResultCode() == DetailviewActivity.STATUS_CREATED || result.getResultCode() == DetailviewActivity.STATUS_UPDATED || result.getResultCode() == DetailviewActivity.STATUS_DELETED) {
                         long itemId = result.getData().getLongExtra(DetailviewActivity.ARG_ITEM_ID, -1);
                         this.operationRunner.run(
                                 // call operation
@@ -187,6 +187,8 @@ public class OverviewActivity extends AppCompatActivity {
                                         onTodoCreated(todo);
                                     }else if (result.getResultCode() == DetailviewActivity.STATUS_UPDATED){
                                         onTodoUpdated(todo);
+                                    } else if(result.getResultCode() == DetailviewActivity.STATUS_DELETED){
+                                        onTodoDeleted();
                                     }
                                 }
                         );
@@ -195,10 +197,6 @@ public class OverviewActivity extends AppCompatActivity {
     }
 
     private void addListitemView(Todo todo){
-        //TextView listitemView = (TextView) getLayoutInflater().inflate(R.layout.activity_overview_listitem_view);
-        //listitemView.setText(item);
-        //listView.addView(listitemView);
-        //listitemView.setOnClickListener(v -> onListitemSelected(((TextView)v).getText().toString()));
         listViewAdapter.add(todo);
         listView.setSelection(listViewAdapter.getPosition(todo));
     }
@@ -235,6 +233,13 @@ public class OverviewActivity extends AppCompatActivity {
         //.... alle
         //this.listViewAdapter.notifyDataSetChanged();
         sortTodos();
+    }
+
+    private void onTodoDeleted(){
+
+        listViewItems.clear();
+
+        syncAllTodos();
     }
 
     private void showMessage(String msg){

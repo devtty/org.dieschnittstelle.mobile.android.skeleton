@@ -47,6 +47,7 @@ import androidx.activity.result.ActivityResultLauncher;
 import androidx.activity.result.contract.ActivityResultContracts;
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
+import androidx.appcompat.app.AlertDialog;
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.databinding.BindingAdapter;
 import androidx.databinding.DataBindingUtil;
@@ -60,6 +61,7 @@ public class DetailviewActivity extends AppCompatActivity implements DetailviewV
 
     public static int STATUS_CREATED = 42;
     public static int STATUS_UPDATED = 43;
+    public static int STATUS_DELETED = 44;
 
     String errorStatus = null;
 
@@ -168,6 +170,23 @@ public class DetailviewActivity extends AppCompatActivity implements DetailviewV
                      setResult(resultCode, returnIntent);
                      finish();
                });
+    }
+
+    public void onDeleteItem(){
+        Intent returnIntent = new Intent();
+        int resultCode = STATUS_DELETED;
+
+        AlertDialog.Builder builder = new AlertDialog.Builder(this);
+        builder.setMessage("Wirklich Löschen")
+                .setNeutralButton("Cancel", null)
+                .setPositiveButton("OK", (dialog, which) ->
+                    operationRunner.run(() -> crudOperations.deleteTodo(todo.getId()),
+                            success -> {
+                                if(success){
+                                    setResult(resultCode, returnIntent);
+                                    finish();
+                                }
+                    })).show();
     }
 
     public void onExpirySelected(){
