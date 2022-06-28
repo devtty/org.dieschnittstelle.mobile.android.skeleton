@@ -1,9 +1,12 @@
 package org.dieschnittstelle.mobile.android.skeleton.model;
 
 import java.io.Serializable;
+import java.util.ArrayList;
+import java.util.List;
 import java.util.Objects;
 
 import androidx.room.Entity;
+import androidx.room.Ignore;
 import androidx.room.PrimaryKey;
 
 // TODO get model from web app (sample web api)
@@ -23,6 +26,10 @@ public class Todo implements Serializable{
     private boolean done;
 
     private boolean favourite;
+
+    private ArrayList<Long> contacts;
+
+    private String location;
 
     public long getId(){
 	return id;
@@ -72,6 +79,30 @@ public class Todo implements Serializable{
 	this.favourite = favourite;
     }
 
+    public ArrayList<Long> getContacts() {
+        return contacts;
+    }
+
+    public void setContacts(ArrayList<Long> contacts) {
+        this.contacts = contacts;
+    }
+
+    public String getLocation() {
+        return location;
+    }
+
+    public void setLocation(String location) {
+        this.location = location;
+    }
+/*
+    @Ignore public boolean isExpired(){
+        if(this.expiry > System.currentTimeMillis()){
+            return true;
+        }
+
+        return false;
+    }
+*/
     public Todo(){}
 
     @Override

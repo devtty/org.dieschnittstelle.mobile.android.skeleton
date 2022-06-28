@@ -42,9 +42,8 @@ public class OverviewActivity extends AppCompatActivity {
 
     private static final String LOGGER = "OverviewActivity";
 
-    public static  final Comparator<Todo> NAME_COMPARATOR = Comparator.comparing(Todo::getName);
-    public static  final Comparator<Todo> CHECKED_AND_NAME_COMPARATOR = Comparator.comparing(Todo::isDone).reversed().thenComparing(Todo::getName); //TODO die erledigten sollen nach unten
-
+    public static  final Comparator<Todo> CHECKED_AND_DATE_IMPORTANCE_COMPARATOR = Comparator.comparing(Todo::isDone).thenComparing(Todo::getExpiry).thenComparing(Todo::isFavourite, Comparator.reverseOrder());
+    public static  final Comparator<Todo> CHECKED_AND_IMPORTANCE_DATE_COMPARATOR = Comparator.comparing(Todo::isDone).thenComparing(Todo::isFavourite, Comparator.reverseOrder()).thenComparing(Todo::getExpiry);
 
     private ViewGroup viewRoot;
     private FloatingActionButton addNewItemButton;
@@ -64,7 +63,7 @@ public class OverviewActivity extends AppCompatActivity {
 
     //private ListAdapter<Todo> listViewAdapter;
 
-    private Comparator<Todo> currentComparator = NAME_COMPARATOR;
+    private Comparator<Todo> currentComparator = CHECKED_AND_DATE_IMPORTANCE_COMPARATOR;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -231,6 +230,8 @@ public class OverviewActivity extends AppCompatActivity {
         todoToBeUpdated.setDone(todo.isDone());
         todoToBeUpdated.setFavourite(todo.isFavourite());
         todoToBeUpdated.setExpiry(todo.getExpiry());
+        todoToBeUpdated.setContacts(todo.getContacts());
+        todoToBeUpdated.setLocation(todo.getLocation());
         //.... alle
         //this.listViewAdapter.notifyDataSetChanged();
         sortTodos();
@@ -249,7 +250,13 @@ public class OverviewActivity extends AppCompatActivity {
     @Override
     public boolean onOptionsItemSelected(@NonNull MenuItem item) {
         if(item.getItemId()==R.id.sortList) {
-            this.currentComparator = CHECKED_AND_NAME_COMPARATOR;
+            if(this.currentComparator.equals(CHECKED_AND_DATE_IMPORTANCE_COMPARATOR)){
+                this.currentComparator = CHECKED_AND_IMPORTANCE_DATE_COMPARATOR;
+
+            }else{
+                this.currentComparator = CHECKED_AND_DATE_IMPORTANCE_COMPARATOR;
+            }
+            //this.currentComparator = CHECKED_AND_NAME_COMPARATOR;
             sortTodos();
             return true;
         }else if(item.getItemId()==R.id.deleteAllItemsLocally) {

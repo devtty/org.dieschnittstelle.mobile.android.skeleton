@@ -12,6 +12,7 @@ import androidx.room.Query;
 
 import androidx.room.Room;
 import androidx.room.RoomDatabase;
+import androidx.room.TypeConverters;
 import androidx.room.Update;
 
 public class RoomLocalTodoCRUDOperations implements ITodoCRUDOperations{
@@ -39,6 +40,7 @@ public class RoomLocalTodoCRUDOperations implements ITodoCRUDOperations{
     }
 
     @Database(entities = {Todo.class}, version = 1)
+    @TypeConverters({ArrayConverter.class})
     public static abstract class TodoDatabase extends RoomDatabase{
         public abstract TodoDao getDao();
     }

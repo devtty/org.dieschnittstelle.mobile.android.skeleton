@@ -15,13 +15,20 @@ import android.util.Log;
 import android.view.Menu;
 import android.view.MenuItem;
 import android.view.View;
+import android.view.ViewGroup;
 import android.view.inputmethod.EditorInfo;
+import android.widget.AdapterView;
+import android.widget.ArrayAdapter;
+import android.widget.ImageButton;
+import android.widget.ImageView;
+import android.widget.ListView;
 import android.widget.TextView;
 import android.widget.Toast;
 
 import com.google.android.material.textfield.TextInputEditText;
 
 import org.dieschnittstelle.mobile.android.skeleton.databinding.ActivityDetailviewBinding;
+
 import org.dieschnittstelle.mobile.android.skeleton.model.ITodoCRUDOperations;
 import org.dieschnittstelle.mobile.android.skeleton.model.Todo;
 import org.dieschnittstelle.mobile.android.skeleton.util.MADAsyncOperationRunner;
@@ -29,8 +36,11 @@ import org.dieschnittstelle.mobile.android.skeleton.util.MADAsyncOperationRunner
 import java.text.DateFormat;
 import java.text.ParseException;
 import java.text.SimpleDateFormat;
+import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Calendar;
 import java.util.Date;
+import java.util.List;
 import java.util.Locale;
 
 import androidx.activity.result.ActivityResultLauncher;
@@ -75,6 +85,10 @@ public class DetailviewActivity extends AppCompatActivity implements DetailviewV
 
     private ActivityResultLauncher<Intent> selectContactLauncher;
 
+    private ListView contactListView;
+    private ArrayAdapter<Long> contactViewAdapter;
+    private ArrayList<Long> contactListItems = new ArrayList<>();
+
     @Override
     protected void onCreate(@Nullable Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
@@ -93,6 +107,7 @@ public class DetailviewActivity extends AppCompatActivity implements DetailviewV
 
         this.operationRunner = new MADAsyncOperationRunner(this, null);
 
+
         long todoId = getIntent().getLongExtra(ARG_ITEM_ID, -1);
 
         if(todoId != -1){
@@ -104,6 +119,7 @@ public class DetailviewActivity extends AppCompatActivity implements DetailviewV
                         this.todo = todo;
                         //this.binding.setTodo(this.todo);
                         this.binding.setController(this);
+
                     });
         }
 
@@ -114,6 +130,11 @@ public class DetailviewActivity extends AppCompatActivity implements DetailviewV
         }
 
         this.binding.setController(this);
+
+        contactListView = findViewById(R.id.contactList);
+        contactViewAdapter = initializeContactViewAdapter();
+        contactListView.setAdapter(contactViewAdapter);
+
     }
 
     public Todo getTodo(){
@@ -135,6 +156,9 @@ public class DetailviewActivity extends AppCompatActivity implements DetailviewV
         }catch (ParseException e){
             Log.i(LOGGER, "ParseException");
         }
+
+        //todo.setContacts(Arrays.toString(contactListItems.toArray()));
+        todo.setContacts(contactListItems);
 
         operationRunner.run(() ->
                todo.getId() > 0 ? crudOperations.updateTodo(todo) : crudOperations.createTodo(todo),
@@ -287,11 +311,13 @@ public class DetailviewActivity extends AppCompatActivity implements DetailviewV
             long internalId = cursor.getLong(internalIdPosition);
             Log.i(LOGGER, "got internal id: " + internalId);
             //ui in letzter letzt semesteraufz
+            contactListItems.add(internalId);
+            this.contactViewAdapter.notifyDataSetChanged();
             showContactDetailsForInternalId(internalId);
         }
     }
 
-    public void showContactDetailsForInternalId(long internalId){
+    public String showContactDetailsForInternalId(long internalId){
         Log.i(LOGGER, "showContactDetailForInternalId(): " + internalId);
         Cursor cursor = getContentResolver().query(ContactsContract.Contacts.CONTENT_URI,
                 null,
@@ -301,6 +327,7 @@ public class DetailviewActivity extends AppCompatActivity implements DetailviewV
         if(cursor.moveToFirst()){
             @SuppressLint("Range") String displayName = cursor.getString(cursor.getColumnIndex(ContactsContract.Contacts.DISPLAY_NAME));
             Log.i(LOGGER, "got displayName: " + displayName);
+            return displayName;
 
             /* ab 80
             Cursor phoneNumberCursor = getContentResolver().query(ContactsContract.CommonDataKinds.Phone.CONTENT_URI,
@@ -316,9 +343,50 @@ public class DetailviewActivity extends AppCompatActivity implements DetailviewV
             }*/
         }else{
             Toast.makeText(this, "No Contacts found for internal id " + internalId + " ...", Toast.LENGTH_SHORT).show();
+            return null;
         }
     }
 
+    private ArrayAdapter<Long> initializeContactViewAdapter(){
+        return new ArrayAdapter<>(this, R.layout.contact_list, contactListItems){
+            @NonNull
+            @Override
+            public View getView(int position, @Nullable View convertView, @NonNull ViewGroup parent) {
+                Log.i(LOGGER, "Adapterinit : " + contactListItems.toString());
+                ViewGroup contactView = (ViewGroup) getLayoutInflater().inflate(R.layout.contact_list,null);
+
+                TextView contactName = contactView.findViewById(R.id.contactName);
+                ImageView removeContact = contactView.findViewById(R.id.removeButton);
+
+                //get contact from position
+                Long internalId = super.getItem(position);
+
+
+                removeContact.setOnClickListener(new View.OnClickListener(){
+                    @Override
+                    public void onClick(View v) {
+                        onRemoveContact(internalId);
+                    }
+                });
+
+                if(checkSelfPermission(Manifest.permission.READ_CONTACTS) == PackageManager.PERMISSION_GRANTED) {
+                    String detail = showContactDetailsForInternalId(internalId);
+                    if(detail != null){
+                        contactName.setText(detail);
+                    }
+                }
+                return contactView;
+
+            }
+        };
+
+    }
+
+    public void onRemoveContact(Long id){
+        Log.i(LOGGER, "onRemoveContact: " + id);
+        this.contactListItems.remove(id);
+        this.contactViewAdapter.notifyDataSetChanged();
+    }
 
     @BindingAdapter("expiryDate")
     public static void bindExpiryDate(@NonNull TextView textView, long time){
