@@ -16,13 +16,25 @@
 
         <TextView
             android:id="@+id/contactName"
-            android:layout_width="320dp"
+            android:layout_width="280dp"
             android:layout_height="wrap_content"
             android:layout_marginLeft="16dp"
             android:layout_marginRight="16dp"
             android:lines="1"
            />
 
+        <ImageView
+            android:id="@+id/callButton"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:background="@drawable/baseline_call_24"
+            />
+        <ImageView
+            android:id="@+id/mailButton"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:background="@drawable/baseline_email_24"
+            />
         <ImageView
             android:id="@+id/removeButton"
             android:layout_width="wrap_content"

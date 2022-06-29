@@ -27,7 +27,7 @@ public class Todo implements Serializable{
 
     private boolean favourite;
 
-    private ArrayList<Long> contacts;
+    private ArrayList<String> contacts;
 
     private String location;
 
@@ -79,11 +79,11 @@ public class Todo implements Serializable{
 	this.favourite = favourite;
     }
 
-    public ArrayList<Long> getContacts() {
+    public ArrayList<String> getContacts() {
         return contacts;
     }
 
-    public void setContacts(ArrayList<Long> contacts) {
+    public void setContacts(ArrayList<String> contacts) {
         this.contacts = contacts;
     }
 
@@ -128,4 +128,5 @@ public class Todo implements Serializable{
                 ", super.toString()=" + super.toString() +
                 '}';
     }
+
 }
