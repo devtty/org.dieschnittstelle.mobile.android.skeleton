@@ -15,13 +15,21 @@ import android.util.Log;
 import android.view.Menu;
 import android.view.MenuItem;
 import android.view.View;
+import android.view.ViewGroup;
 import android.view.inputmethod.EditorInfo;
+import android.widget.AdapterView;
+import android.widget.ArrayAdapter;
+import android.widget.EditText;
+import android.widget.ImageButton;
+import android.widget.ImageView;
+import android.widget.ListView;
 import android.widget.TextView;
 import android.widget.Toast;
 
 import com.google.android.material.textfield.TextInputEditText;
 
 import org.dieschnittstelle.mobile.android.skeleton.databinding.ActivityDetailviewBinding;
+
 import org.dieschnittstelle.mobile.android.skeleton.model.ITodoCRUDOperations;
 import org.dieschnittstelle.mobile.android.skeleton.model.Todo;
 import org.dieschnittstelle.mobile.android.skeleton.util.MADAsyncOperationRunner;
@@ -29,14 +37,18 @@ import org.dieschnittstelle.mobile.android.skeleton.util.MADAsyncOperationRunner
 import java.text.DateFormat;
 import java.text.ParseException;
 import java.text.SimpleDateFormat;
+import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Calendar;
 import java.util.Date;
+import java.util.List;
 import java.util.Locale;
 
 import androidx.activity.result.ActivityResultLauncher;
 import androidx.activity.result.contract.ActivityResultContracts;
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
+import androidx.appcompat.app.AlertDialog;
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.databinding.BindingAdapter;
 import androidx.databinding.DataBindingUtil;
@@ -50,6 +62,7 @@ public class DetailviewActivity extends AppCompatActivity implements DetailviewV
 
     public static int STATUS_CREATED = 42;
     public static int STATUS_UPDATED = 43;
+    public static int STATUS_DELETED = 44;
 
     String errorStatus = null;
 
@@ -75,6 +88,10 @@ public class DetailviewActivity extends AppCompatActivity implements DetailviewV
 
     private ActivityResultLauncher<Intent> selectContactLauncher;
 
+    private ListView contactListView;
+    private ArrayAdapter<String> contactViewAdapter;
+    private ArrayList<String> contactListItems = new ArrayList<>();
+
     @Override
     protected void onCreate(@Nullable Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
@@ -93,6 +110,7 @@ public class DetailviewActivity extends AppCompatActivity implements DetailviewV
 
         this.operationRunner = new MADAsyncOperationRunner(this, null);
 
+
         long todoId = getIntent().getLongExtra(ARG_ITEM_ID, -1);
 
         if(todoId != -1){
@@ -104,6 +122,7 @@ public class DetailviewActivity extends AppCompatActivity implements DetailviewV
                         this.todo = todo;
                         //this.binding.setTodo(this.todo);
                         this.binding.setController(this);
+                        todo.getContacts().forEach(id -> contactListItems.add(id));
                     });
         }
 
@@ -114,6 +133,16 @@ public class DetailviewActivity extends AppCompatActivity implements DetailviewV
         }
 
         this.binding.setController(this);
+
+        contactListView = findViewById(R.id.contactList);
+        contactViewAdapter = initializeContactViewAdapter();
+        contactListView.setAdapter(contactViewAdapter);
+
+    }
+
+    private void addContacttoList(Long aLong) {
+        Log.i(LOGGER, "try adding: " + aLong);
+        contactViewAdapter.add(String.valueOf(aLong));
     }
 
     public Todo getTodo(){
@@ -136,6 +165,9 @@ public class DetailviewActivity extends AppCompatActivity implements DetailviewV
             Log.i(LOGGER, "ParseException");
         }
 
+        //todo.setContacts(Arrays.toString(contactListItems.toArray()));
+        todo.setContacts(contactListItems);
+
         operationRunner.run(() ->
                todo.getId() > 0 ? crudOperations.updateTodo(todo) : crudOperations.createTodo(todo),
                todo -> {
@@ -144,6 +176,23 @@ public class DetailviewActivity extends AppCompatActivity implements DetailviewV
                      setResult(resultCode, returnIntent);
                      finish();
                });
+    }
+
+    public void onDeleteItem(){
+        Intent returnIntent = new Intent();
+        int resultCode = STATUS_DELETED;
+
+        AlertDialog.Builder builder = new AlertDialog.Builder(this);
+        builder.setMessage("Wirklich Löschen")
+                .setNeutralButton("Cancel", null)
+                .setPositiveButton("OK", (dialog, which) ->
+                    operationRunner.run(() -> crudOperations.deleteTodo(todo.getId()),
+                            success -> {
+                                if(success){
+                                    setResult(resultCode, returnIntent);
+                                    finish();
+                                }
+                    })).show();
     }
 
     public void onExpirySelected(){
@@ -269,6 +318,7 @@ public class DetailviewActivity extends AppCompatActivity implements DetailviewV
     }
 
     public void showContactDetails(Uri contactUri){
+        Log.i(LOGGER, "showContactDetails");
         //Permission Request
         int hasReadContactsPermission = checkSelfPermission(Manifest.permission.READ_CONTACTS);
         if(hasReadContactsPermission != PackageManager.PERMISSION_GRANTED){
@@ -287,11 +337,13 @@ public class DetailviewActivity extends AppCompatActivity implements DetailviewV
             long internalId = cursor.getLong(internalIdPosition);
             Log.i(LOGGER, "got internal id: " + internalId);
             //ui in letzter letzt semesteraufz
+            contactListItems.add(String.valueOf(internalId));
+            this.contactViewAdapter.notifyDataSetChanged();
             showContactDetailsForInternalId(internalId);
         }
     }
 
-    public void showContactDetailsForInternalId(long internalId){
+    public Contact showContactDetailsForInternalId(long internalId){
         Log.i(LOGGER, "showContactDetailForInternalId(): " + internalId);
         Cursor cursor = getContentResolver().query(ContactsContract.Contacts.CONTENT_URI,
                 null,
@@ -301,24 +353,108 @@ public class DetailviewActivity extends AppCompatActivity implements DetailviewV
         if(cursor.moveToFirst()){
             @SuppressLint("Range") String displayName = cursor.getString(cursor.getColumnIndex(ContactsContract.Contacts.DISPLAY_NAME));
             Log.i(LOGGER, "got displayName: " + displayName);
+            //return displayName;
 
-            /* ab 80
+            String mobile = null;
+
             Cursor phoneNumberCursor = getContentResolver().query(ContactsContract.CommonDataKinds.Phone.CONTENT_URI,
                     null,
-                    "_id=?",
+                    ContactsContract.CommonDataKinds.Phone.CONTACT_ID + "=?",
                     new String[]{String.valueOf(internalId)},
                     null);
-            while (cursor.moveToNext()){
-                @SuppressLint("Range") String number = cursor.getString(cursor.getColumnIndex(ContactsContract.CommonDataKinds.Phone.NUMBER));
-                @SuppressLint("Range") int phoneNumberType = cursor.getInt(cursor.getColumnIndex(ContactsContract.CommonDataKinds.Phone.TYPE));
+            while (phoneNumberCursor.moveToNext()){
+                @SuppressLint("Range") String number = phoneNumberCursor.getString(phoneNumberCursor.getColumnIndex(ContactsContract.CommonDataKinds.Phone.NUMBER));
+                @SuppressLint("Range") int phoneNumberType = phoneNumberCursor.getInt(phoneNumberCursor.getColumnIndex(ContactsContract.CommonDataKinds.Phone.TYPE));
                 Log.i(LOGGER, "got number " + number + " of type " + (phoneNumberType==ContactsContract.CommonDataKinds.Phone.TYPE_MOBILE ? " mobile " : " not mobile"));
+                if(phoneNumberType==ContactsContract.CommonDataKinds.Phone.TYPE_MOBILE)
+                    mobile = number;
+            }
 
-            }*/
+            //START last vc
+
+            String mailAddr = null;
+
+            Cursor mailcursor = getContentResolver().query(ContactsContract.CommonDataKinds.Email.CONTENT_URI,
+                    null,
+                    ContactsContract.CommonDataKinds.Email.CONTACT_ID + "=?",
+                    new String[]{String.valueOf(internalId)},
+                    null);
+            while(mailcursor.moveToNext()){
+                int mailAddrIndex = mailcursor.getColumnIndex(ContactsContract.CommonDataKinds.Email.ADDRESS);
+                mailAddr = mailcursor.getString(mailAddrIndex);
+                Log.i(LOGGER, "found mail address: " + mailAddr);
+            }
+
+            Log.i(LOGGER, "Contact: " + displayName + mailAddr + mobile);
+            return new Contact(displayName, mailAddr, mobile);
         }else{
             Toast.makeText(this, "No Contacts found for internal id " + internalId + " ...", Toast.LENGTH_SHORT).show();
+            return null;
         }
     }
 
+
+
+    private ArrayAdapter<String> initializeContactViewAdapter(){
+        Log.i(LOGGER, "initializeContactViewAdapter");
+        return new ArrayAdapter<>(this, R.layout.contact_list, contactListItems){
+            @NonNull
+            @Override
+            public View getView(int position, @Nullable View convertView, @NonNull ViewGroup parent) {
+
+                Log.i(LOGGER, "Adapterinit : " + contactListItems.toString());
+                ViewGroup contactView = (ViewGroup) getLayoutInflater().inflate(R.layout.contact_list,null);
+
+                TextView contactName = contactView.findViewById(R.id.contactName);
+                ImageView removeContact = contactView.findViewById(R.id.removeButton);
+                ImageView callContact = contactView.findViewById(R.id.callButton);
+                ImageView mailContact = contactView.findViewById(R.id.mailButton);
+
+
+                Long internalId = Long.parseLong(super.getItem(position));
+
+                removeContact.setOnClickListener(v -> contactViewAdapter.remove(contactViewAdapter.getItem(position)));
+
+                //mailContact.setOnClickListener(v -> sendSMS());
+
+                if(checkSelfPermission(Manifest.permission.READ_CONTACTS) == PackageManager.PERMISSION_GRANTED) {
+                    Contact detail = showContactDetailsForInternalId(internalId);
+                    if(detail != null){
+                        contactName.setText(detail.getName());
+                        if(detail.getMobile()!=null){
+                            callContact.setOnClickListener(v -> sendSMS(detail.getMobile()));
+                        }else{
+                            callContact.setEnabled(false);
+                        }
+                        if(detail.getEmail()!=null){
+                            mailContact.setOnClickListener(v -> sendMail(detail.getEmail()));
+                        }else{
+                            mailContact.setEnabled(false);
+                        }
+                    }
+                }
+                return contactView;
+
+            }
+        };
+
+    }
+
+    public void sendSMS(String mobileNumber){
+        Uri receiverPhoneUri = Uri.parse("smsto:" + mobileNumber);
+        Intent sendSMSIntent = new Intent(Intent.ACTION_SENDTO, receiverPhoneUri);
+        sendSMSIntent.putExtra("sms_body", this.todo.getName());
+        startActivity(sendSMSIntent);
+    }
+
+    public void sendMail(String mailAddr){
+        Uri mailUri = Uri.parse("mailto:" + mailAddr);
+        Intent sendMailIntent = new Intent(Intent.ACTION_SENDTO, mailUri);
+        sendMailIntent.putExtra(Intent.EXTRA_EMAIL, mailAddr);
+        sendMailIntent.putExtra(Intent.EXTRA_SUBJECT, this.todo.getName());
+        sendMailIntent.putExtra(Intent.EXTRA_TEXT, this.todo.getDescription());
+        startActivity(sendMailIntent);
+    }
 
     @BindingAdapter("expiryDate")
     public static void bindExpiryDate(@NonNull TextView textView, long time){
@@ -336,5 +472,4 @@ public class DetailviewActivity extends AppCompatActivity implements DetailviewV
         }
 
     }
-
 }
