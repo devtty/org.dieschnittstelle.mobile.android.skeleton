@@ -311,7 +311,8 @@ public class DetailviewActivity extends AppCompatActivity implements DetailviewV
         //Permission Request
         int hasReadContactsPermission = checkSelfPermission(Manifest.permission.READ_CONTACTS);
         if(hasReadContactsPermission != PackageManager.PERMISSION_GRANTED){
-            requestPermissions(new String[]{Manifest.permission.READ_CONTACTS}, 1);// TODO 42 hier?
+            latestSelectedContactUri = contactUri;
+            requestPermissions(new String[]{Manifest.permission.READ_CONTACTS}, 1);
             return;
         }
 
