@@ -17,10 +17,7 @@ import android.view.MenuItem;
 import android.view.View;
 import android.view.ViewGroup;
 import android.view.inputmethod.EditorInfo;
-import android.widget.AdapterView;
 import android.widget.ArrayAdapter;
-import android.widget.EditText;
-import android.widget.ImageButton;
 import android.widget.ImageView;
 import android.widget.ListView;
 import android.widget.TextView;
@@ -38,10 +35,8 @@ import java.text.DateFormat;
 import java.text.ParseException;
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.Calendar;
 import java.util.Date;
-import java.util.List;
 import java.util.Locale;
 
 import androidx.activity.result.ActivityResultLauncher;
@@ -123,7 +118,7 @@ public class DetailviewActivity extends AppCompatActivity implements DetailviewV
                         //this.binding.setTodo(this.todo);
                         this.binding.setController(this);
                         if(todo.getContacts()!=null)
-                            todo.getContacts().forEach(id -> contactListItems.add(id));
+                            contactListItems.addAll(todo.getContacts());
                     });
         }
 
@@ -139,11 +134,6 @@ public class DetailviewActivity extends AppCompatActivity implements DetailviewV
         contactViewAdapter = initializeContactViewAdapter();
         contactListView.setAdapter(contactViewAdapter);
 
-    }
-
-    private void addContacttoList(Long aLong) {
-        Log.i(LOGGER, "try adding: " + aLong);
-        contactViewAdapter.add(String.valueOf(aLong));
     }
 
     public Todo getTodo(){
@@ -293,7 +283,7 @@ public class DetailviewActivity extends AppCompatActivity implements DetailviewV
     }
 
     private Uri latestSelectedContactUri;
-    private static int REQUEST_PERMISSION_REQUEST_CODE = 42;
+    private static final int REQUEST_PERMISSION_REQUEST_CODE = 42;
 
 
     //damit anwendung bei fehlenden Rechten nicht unterbrochen wird

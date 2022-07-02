@@ -4,7 +4,7 @@
 
 # ToDo
 
-a project in mobile appilcation development
+a project in mobile application development
 
 ## Differences from skeleton
 
