@@ -122,7 +122,8 @@ public class DetailviewActivity extends AppCompatActivity implements DetailviewV
                         this.todo = todo;
                         //this.binding.setTodo(this.todo);
                         this.binding.setController(this);
-                        todo.getContacts().forEach(id -> contactListItems.add(id));
+                        if(todo.getContacts()!=null)
+                            todo.getContacts().forEach(id -> contactListItems.add(id));
                     });
         }
 
