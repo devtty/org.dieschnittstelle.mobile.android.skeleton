@@ -38,6 +38,8 @@ import androidx.appcompat.app.AppCompatActivity;
 import androidx.databinding.BindingConversion;
 import androidx.databinding.DataBindingUtil;
 
+import static com.google.android.material.snackbar.BaseTransientBottomBar.LENGTH_LONG;
+
 public class OverviewActivity extends AppCompatActivity {
 
     private static final String LOGGER = "OverviewActivity";
@@ -46,8 +48,6 @@ public class OverviewActivity extends AppCompatActivity {
     public static  final Comparator<Todo> CHECKED_AND_IMPORTANCE_DATE_COMPARATOR = Comparator.comparing(Todo::isDone).thenComparing(Todo::isFavourite, Comparator.reverseOrder()).thenComparing(Todo::getExpiry);
 
     private ViewGroup viewRoot;
-    private FloatingActionButton addNewItemButton;
-    private ProgressBar progressBar;
     private MADAsyncOperationRunner operationRunner;
 
     private ListView listView;
@@ -57,7 +57,6 @@ public class OverviewActivity extends AppCompatActivity {
     private ITodoCRUDOperations crudOperations;
 
     private ActivityResultLauncher<Intent> detailviewActivityLauncher;
-    private ActivityResultLauncher<Intent> loginActivityLauncher;
 
     //private final List<Todo> todoList = new ArrayList<>();
 
@@ -70,10 +69,10 @@ public class OverviewActivity extends AppCompatActivity {
         super.onCreate(savedInstanceState);
 
         if(((TodoApplication) getApplication()).isOnline()){
-            this.loginActivityLauncher = registerForActivityResult(
+            ActivityResultLauncher<Intent> loginActivityLauncher = registerForActivityResult(
                     new ActivityResultContracts.StartActivityForResult(),
                     result -> {
-                        if(result.getResultCode() == Activity.RESULT_OK){
+                        if (result.getResultCode() == Activity.RESULT_OK) {
                             Log.i(LOGGER, "auth loa");
                         }
                     }
@@ -86,18 +85,12 @@ public class OverviewActivity extends AppCompatActivity {
 
         setContentView(R.layout.activity_overview);
 
-
-      /*  listView = findViewById(R.id.listView);
-
-        listViewAdapter = new ToDoAdapter();
-        listView.setAdapter(listViewAdapter);*/
-
         viewRoot = findViewById(R.id.viewRoot);
         listView = findViewById(R.id.listView);
 
-        addNewItemButton = findViewById(R.id.fab);
-        progressBar = findViewById(R.id.progressBar);
-        operationRunner = new MADAsyncOperationRunner(this,progressBar);
+        FloatingActionButton addNewItemButton = findViewById(R.id.fab);
+        ProgressBar progressBar = findViewById(R.id.progressBar);
+        operationRunner = new MADAsyncOperationRunner(this, progressBar);
 
         listViewAdapter = initializeListViewAdapter();
         listView.setAdapter(listViewAdapter);
@@ -110,12 +103,7 @@ public class OverviewActivity extends AppCompatActivity {
 
         addNewItemButton.setOnClickListener(v -> onAddNewItem());
 
-        //crudOperations = SimpleTodoCRUDOperations.getInstance();
-        //crudOperations = new RoomLocalTodoCRUDOperations(this.getApplicationContext()); //70:00
-        //crudOperations = new RetrofitRemoteTodoCRUDOperations();
         crudOperations = ((TodoApplication) getApplication()).getCrudOperations();
-        //TODO Retrofit aufrufen bzw. nach REQ implementieren (gleiches fuer Detail)
-
 
         syncAllTodos();
 
@@ -205,7 +193,6 @@ public class OverviewActivity extends AppCompatActivity {
         Intent detailviewIntent = new Intent(this, DetailviewActivity.class);
         detailviewIntent.putExtra(DetailviewActivity.ARG_ITEM_ID, todo.getId());
         Log.i(LOGGER, "calling detailview vor todo: " + todo );
-       //startActivity(detailviewIntent);
         detailviewActivityLauncher.launch(detailviewIntent);
     }
 
@@ -243,7 +230,7 @@ public class OverviewActivity extends AppCompatActivity {
     }
 
     private void showMessage(String msg){
-        Snackbar.make(viewRoot, msg, Snackbar.LENGTH_LONG).show();
+        Snackbar.make(viewRoot, msg, LENGTH_LONG).show();
     }
 
     @Override

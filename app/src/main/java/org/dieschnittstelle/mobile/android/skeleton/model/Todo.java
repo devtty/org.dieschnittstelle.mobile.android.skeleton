@@ -2,14 +2,10 @@ package org.dieschnittstelle.mobile.android.skeleton.model;
 
 import java.io.Serializable;
 import java.util.ArrayList;
-import java.util.List;
 import java.util.Objects;
 
 import androidx.room.Entity;
-import androidx.room.Ignore;
 import androidx.room.PrimaryKey;
-
-// TODO get model from web app (sample web api)
 
 @Entity
 public class Todo implements Serializable{
@@ -94,15 +90,7 @@ public class Todo implements Serializable{
     public void setLocation(String location) {
         this.location = location;
     }
-/*
-    @Ignore public boolean isExpired(){
-        if(this.expiry > System.currentTimeMillis()){
-            return true;
-        }
 
-        return false;
-    }
-*/
     public Todo(){}
 
     @Override

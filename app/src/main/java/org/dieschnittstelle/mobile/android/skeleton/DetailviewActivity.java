@@ -17,10 +17,7 @@ import android.view.MenuItem;
 import android.view.View;
 import android.view.ViewGroup;
 import android.view.inputmethod.EditorInfo;
-import android.widget.AdapterView;
 import android.widget.ArrayAdapter;
-import android.widget.EditText;
-import android.widget.ImageButton;
 import android.widget.ImageView;
 import android.widget.ListView;
 import android.widget.TextView;
@@ -38,10 +35,8 @@ import java.text.DateFormat;
 import java.text.ParseException;
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.Calendar;
 import java.util.Date;
-import java.util.List;
 import java.util.Locale;
 
 import androidx.activity.result.ActivityResultLauncher;
@@ -60,9 +55,9 @@ public class DetailviewActivity extends AppCompatActivity implements DetailviewV
 
     public static final String ARG_ITEM_ID = "itemId";
 
-    public static int STATUS_CREATED = 42;
-    public static int STATUS_UPDATED = 43;
-    public static int STATUS_DELETED = 44;
+    public static final int STATUS_CREATED = 42;
+    public static final int STATUS_UPDATED = 43;
+    public static final int STATUS_DELETED = 44;
 
     String errorStatus = null;
 
@@ -88,7 +83,6 @@ public class DetailviewActivity extends AppCompatActivity implements DetailviewV
 
     private ActivityResultLauncher<Intent> selectContactLauncher;
 
-    private ListView contactListView;
     private ArrayAdapter<String> contactViewAdapter;
     private ArrayList<String> contactListItems = new ArrayList<>();
 
@@ -120,10 +114,9 @@ public class DetailviewActivity extends AppCompatActivity implements DetailviewV
                     //onOperationResult
                     todo -> {
                         this.todo = todo;
-                        //this.binding.setTodo(this.todo);
                         this.binding.setController(this);
                         if(todo.getContacts()!=null)
-                            todo.getContacts().forEach(id -> contactListItems.add(id));
+                            contactListItems.addAll(todo.getContacts());
                     });
         }
 
@@ -135,15 +128,10 @@ public class DetailviewActivity extends AppCompatActivity implements DetailviewV
 
         this.binding.setController(this);
 
-        contactListView = findViewById(R.id.contactList);
+        ListView contactListView = findViewById(R.id.contactList);
         contactViewAdapter = initializeContactViewAdapter();
         contactListView.setAdapter(contactViewAdapter);
 
-    }
-
-    private void addContacttoList(Long aLong) {
-        Log.i(LOGGER, "try adding: " + aLong);
-        contactViewAdapter.add(String.valueOf(aLong));
     }
 
     public Todo getTodo(){
@@ -163,7 +151,8 @@ public class DetailviewActivity extends AppCompatActivity implements DetailviewV
             Date updateExpiry = formatter.parse(datePartOfExpiry + " " + timePartOfExpiry);
             todo.setExpiry(updateExpiry.getTime());
         }catch (ParseException e){
-            Log.i(LOGGER, "ParseException");
+            Log.i(LOGGER, "ParseException: " + e.getMessage());
+            Toast.makeText(this, "Das Fälligkeitsdatum war unvollständig und wurde nicht abgespeichert.", Toast.LENGTH_LONG).show();
         }
 
         //todo.setContacts(Arrays.toString(contactListItems.toArray()));
@@ -181,7 +170,6 @@ public class DetailviewActivity extends AppCompatActivity implements DetailviewV
 
     public void onDeleteItem(){
         Intent returnIntent = new Intent();
-        int resultCode = STATUS_DELETED;
 
         AlertDialog.Builder builder = new AlertDialog.Builder(this);
         builder.setMessage("Wirklich Löschen")
@@ -190,7 +178,7 @@ public class DetailviewActivity extends AppCompatActivity implements DetailviewV
                     operationRunner.run(() -> crudOperations.deleteTodo(todo.getId()),
                             success -> {
                                 if(success){
-                                    setResult(resultCode, returnIntent);
+                                    setResult(STATUS_DELETED, returnIntent);
                                     finish();
                                 }
                     })).show();
@@ -241,7 +229,8 @@ public class DetailviewActivity extends AppCompatActivity implements DetailviewV
         if(isCalledOnFocusChange ? !hasFocus
                 : (actionId == EditorInfo.IME_ACTION_DONE
                 || actionId == EditorInfo.IME_ACTION_NEXT)){
-            if(todo.getName().length() < 5) {
+
+            if(todo.getName()!=null && todo.getName().length() < 5) {
                 errorStatus = "Name to short!";
                 this.binding.setController(this);
             }
@@ -293,7 +282,7 @@ public class DetailviewActivity extends AppCompatActivity implements DetailviewV
     }
 
     private Uri latestSelectedContactUri;
-    private static int REQUEST_PERMISSION_REQUEST_CODE = 42;
+    private static final int REQUEST_PERMISSION_REQUEST_CODE = 42;
 
 
     //damit anwendung bei fehlenden Rechten nicht unterbrochen wird
@@ -323,7 +312,8 @@ public class DetailviewActivity extends AppCompatActivity implements DetailviewV
         //Permission Request
         int hasReadContactsPermission = checkSelfPermission(Manifest.permission.READ_CONTACTS);
         if(hasReadContactsPermission != PackageManager.PERMISSION_GRANTED){
-            requestPermissions(new String[]{Manifest.permission.READ_CONTACTS}, 1);// TODO 42 hier?
+            latestSelectedContactUri = contactUri;
+            requestPermissions(new String[]{Manifest.permission.READ_CONTACTS}, 1);
             return;
         }
 
@@ -371,8 +361,6 @@ public class DetailviewActivity extends AppCompatActivity implements DetailviewV
                     mobile = number;
             }
 
-            //START last vc
-
             String mailAddr = null;
 
             Cursor mailcursor = getContentResolver().query(ContactsContract.CommonDataKinds.Email.CONTENT_URI,
@@ -415,8 +403,6 @@ public class DetailviewActivity extends AppCompatActivity implements DetailviewV
                 Long internalId = Long.parseLong(super.getItem(position));
 
                 removeContact.setOnClickListener(v -> contactViewAdapter.remove(contactViewAdapter.getItem(position)));
-
-                //mailContact.setOnClickListener(v -> sendSMS());
 
                 if(checkSelfPermission(Manifest.permission.READ_CONTACTS) == PackageManager.PERMISSION_GRANTED) {
                     Contact detail = showContactDetailsForInternalId(internalId);

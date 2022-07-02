@@ -57,9 +57,9 @@ public class SyncedTodoCRUDOperations implements ITodoCRUDOperations{
     @Override
     public boolean deleteAllTodos(boolean remote){
         if(!remote){
-            return localOperations.deleteAllTodos(remote);
+            return localOperations.deleteAllTodos(false);
         }else{
-            return remoteOperations.deleteAllTodos(remote);
+            return remoteOperations.deleteAllTodos(true);
         }
     }
 }

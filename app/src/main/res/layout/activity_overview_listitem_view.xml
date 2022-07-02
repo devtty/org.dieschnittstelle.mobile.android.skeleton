@@ -49,6 +49,7 @@
 
         </LinearLayout>
 
+        <!-- was gilt als expired? heute inklusive? -->
         <TextView
             android:id="@+id/itemName"
             android:text="@{todo.name}"
