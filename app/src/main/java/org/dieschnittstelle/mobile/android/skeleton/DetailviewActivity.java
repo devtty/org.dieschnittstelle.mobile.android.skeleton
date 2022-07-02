@@ -55,9 +55,9 @@ public class DetailviewActivity extends AppCompatActivity implements DetailviewV
 
     public static final String ARG_ITEM_ID = "itemId";
 
-    public static int STATUS_CREATED = 42;
-    public static int STATUS_UPDATED = 43;
-    public static int STATUS_DELETED = 44;
+    public static final int STATUS_CREATED = 42;
+    public static final int STATUS_UPDATED = 43;
+    public static final int STATUS_DELETED = 44;
 
     String errorStatus = null;
 
@@ -83,7 +83,6 @@ public class DetailviewActivity extends AppCompatActivity implements DetailviewV
 
     private ActivityResultLauncher<Intent> selectContactLauncher;
 
-    private ListView contactListView;
     private ArrayAdapter<String> contactViewAdapter;
     private ArrayList<String> contactListItems = new ArrayList<>();
 
@@ -115,7 +114,6 @@ public class DetailviewActivity extends AppCompatActivity implements DetailviewV
                     //onOperationResult
                     todo -> {
                         this.todo = todo;
-                        //this.binding.setTodo(this.todo);
                         this.binding.setController(this);
                         if(todo.getContacts()!=null)
                             contactListItems.addAll(todo.getContacts());
@@ -130,7 +128,7 @@ public class DetailviewActivity extends AppCompatActivity implements DetailviewV
 
         this.binding.setController(this);
 
-        contactListView = findViewById(R.id.contactList);
+        ListView contactListView = findViewById(R.id.contactList);
         contactViewAdapter = initializeContactViewAdapter();
         contactListView.setAdapter(contactViewAdapter);
 
@@ -171,7 +169,6 @@ public class DetailviewActivity extends AppCompatActivity implements DetailviewV
 
     public void onDeleteItem(){
         Intent returnIntent = new Intent();
-        int resultCode = STATUS_DELETED;
 
         AlertDialog.Builder builder = new AlertDialog.Builder(this);
         builder.setMessage("Wirklich Löschen")
@@ -180,7 +177,7 @@ public class DetailviewActivity extends AppCompatActivity implements DetailviewV
                     operationRunner.run(() -> crudOperations.deleteTodo(todo.getId()),
                             success -> {
                                 if(success){
-                                    setResult(resultCode, returnIntent);
+                                    setResult(STATUS_DELETED, returnIntent);
                                     finish();
                                 }
                     })).show();
@@ -231,7 +228,8 @@ public class DetailviewActivity extends AppCompatActivity implements DetailviewV
         if(isCalledOnFocusChange ? !hasFocus
                 : (actionId == EditorInfo.IME_ACTION_DONE
                 || actionId == EditorInfo.IME_ACTION_NEXT)){
-            if(todo.getName().length() < 5) {
+
+            if(todo.getName()!=null && todo.getName().length() < 5) {
                 errorStatus = "Name to short!";
                 this.binding.setController(this);
             }
@@ -361,8 +359,6 @@ public class DetailviewActivity extends AppCompatActivity implements DetailviewV
                     mobile = number;
             }
 
-            //START last vc
-
             String mailAddr = null;
 
             Cursor mailcursor = getContentResolver().query(ContactsContract.CommonDataKinds.Email.CONTENT_URI,
@@ -405,8 +401,6 @@ public class DetailviewActivity extends AppCompatActivity implements DetailviewV
                 Long internalId = Long.parseLong(super.getItem(position));
 
                 removeContact.setOnClickListener(v -> contactViewAdapter.remove(contactViewAdapter.getItem(position)));
-
-                //mailContact.setOnClickListener(v -> sendSMS());
 
                 if(checkSelfPermission(Manifest.permission.READ_CONTACTS) == PackageManager.PERMISSION_GRANTED) {
                     Contact detail = showContactDetailsForInternalId(internalId);

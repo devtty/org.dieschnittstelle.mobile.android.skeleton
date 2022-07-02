@@ -27,7 +27,6 @@ public class LoginActivity extends AppCompatActivity {
 
     private LoginViewModel loginViewModel;
     private ActivityLoginBinding binding;
-    private MADAsyncOperationRunner operationRunner;
 
     @Override
     public void onCreate(Bundle savedInstanceState) {
@@ -44,8 +43,6 @@ public class LoginActivity extends AppCompatActivity {
         final Button loginButton = binding.login;
         final ProgressBar loadingProgressBar = binding.loading;
         final TextView messageTextView = binding.message;
-
-        //operationRunner = new MADAsyncOperationRunner(this,loadingProgressBar);
 
         loginViewModel.getLoginFormState().observe(this, new Observer<LoginFormState>() {
             @Override
@@ -117,14 +114,10 @@ public class LoginActivity extends AppCompatActivity {
         });
 
         loginButton.setOnClickListener(v -> {
-            //TODO ProgressBar doesnt show up (on ui-thread it is shown but login gets an exception)
+            //TODO ProgressBar doesnt show up (on ui-thread/with opRunner it is shown but login gets an exception)
             loadingProgressBar.setVisibility(View.VISIBLE);
-
-
-            //funzt in diesem thread
             loginViewModel.login(usernameEditText.getText().toString(),
                     passwordEditText.getText().toString());
-
         });
     }
 

@@ -26,6 +26,8 @@ import retrofit2.http.PUT;
  */
 public class LoginDataSource {
 
+    public final static String LOGGER = "LoginDataSource";
+
     public interface UsersWebAPI{
         @PUT("/api/users/auth")
         public Call<Boolean> authenticate(@Body User user);
@@ -58,11 +60,10 @@ public class LoginDataSource {
     }
 
     public Result<LoggedInUser> login(String username, String password) {
-        Log.i(LoginDataSource.class.getName(), "Auth Login: " + username + "/" + password);
+        Log.i(LOGGER, "Auth Login: " + username + "/" + password);
 
         try {
-            // TODO: handle loggedInUser authentication
-
+            Thread.sleep(2000);
             Future<Boolean> check = checkFromApi(username, password);
 
             if(check.get().booleanValue()) {
@@ -76,7 +77,7 @@ public class LoginDataSource {
                 return null;
             }
         } catch (Exception e) {
-            Log.i(LoginDataSource.class.getName(), "ERROR AUTH" + Arrays.toString(e.getStackTrace()));
+            Log.i(LOGGER, "ERROR AUTH" + Arrays.toString(e.getStackTrace()));
 
         }
         return new Result.Error(new IOException("Login Error logging in"));
@@ -99,19 +100,21 @@ public class LoginDataSource {
 
                 Boolean body = authenticate.execute().body();
 
-                Thread.sleep(2000);
                 if(body.booleanValue()){
-                    Log.i(LoginDataSource.class.getName(), "Authenticated: ");
+                    Log.i(LOGGER, "Authenticated: ");
                     result.complete(true);
                 }else{
-                    Log.i(LoginDataSource.class.getName(), "AUTH :not " );
+                    Log.i(LOGGER, "AUTH :not " );
                     //return new Result.Error(new IOException("Login Error logging in"));
                     result.complete(false);
                 }
 
-            } catch (IOException | InterruptedException e) {
-                e.printStackTrace();
-            }
+            } catch (IOException e) {
+                Log.i(LOGGER, "IO Exception: " + e.getMessage());
+            } /*catch (InterruptedException e) {
+                Log.i(LOGGER, "interrupted: " + e.getMessage());
+                Thread.currentThread().interrupt();
+            }*/
         }).start();
         return result;
     }
