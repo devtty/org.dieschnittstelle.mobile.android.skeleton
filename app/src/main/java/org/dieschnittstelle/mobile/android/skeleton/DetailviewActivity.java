@@ -151,7 +151,8 @@ public class DetailviewActivity extends AppCompatActivity implements DetailviewV
             Date updateExpiry = formatter.parse(datePartOfExpiry + " " + timePartOfExpiry);
             todo.setExpiry(updateExpiry.getTime());
         }catch (ParseException e){
-            Log.i(LOGGER, "ParseException");
+            Log.i(LOGGER, "ParseException: " + e.getMessage());
+            Toast.makeText(this, "Das Fälligkeitsdatum war unvollständig und wurde nicht abgespeichert.", Toast.LENGTH_LONG).show();
         }
 
         //todo.setContacts(Arrays.toString(contactListItems.toArray()));
